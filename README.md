@@ -168,6 +168,7 @@ git ls-files
 ## Notes
 
 - the live run page polls the backend every 2 seconds
+- the run dashboard uses a light background UI and shows per-step workflow status plus per-region status cards
 - Lighthouse on Windows may sometimes return a non-zero exit code after writing output files due to temp cleanup issues; this project treats written report files as usable
 - auth/login/basic-auth style navigation targets are filtered before crawling
 - this project is path-portable and can be moved to another folder as long as dependencies are installed there

@@ -6,16 +6,16 @@
     <title>Run {{ run_id }}</title>
     <style>
         :root {
-            --bg: #020617;
-            --panel: #0f172a;
-            --panel-2: #111827;
-            --text: #e2e8f0;
-            --muted: #94a3b8;
-            --accent: #38bdf8;
-            --success: #22c55e;
-            --warn: #f59e0b;
-            --danger: #ef4444;
-            --border: #1e293b;
+            --bg: #f8fafc;
+            --panel: #ffffff;
+            --panel-2: #f8fafc;
+            --text: #0f172a;
+            --muted: #64748b;
+            --accent: #0ea5e9;
+            --success: #16a34a;
+            --warn: #d97706;
+            --danger: #dc2626;
+            --border: #dbe4ee;
         }
         body { font-family: Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
         .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
@@ -27,10 +27,10 @@
         .metric-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
         .metric-value { font-size: 18px; font-weight: 700; margin-top: 6px; }
         .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-        .queued { background: #1e293b; color: #cbd5e1; }
-        .running { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; }
-        .completed { background: rgba(34, 197, 94, 0.15); color: #86efac; }
-        .failed { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+        .queued { background: #e2e8f0; color: #334155; }
+        .running { background: rgba(14, 165, 233, 0.12); color: #0369a1; }
+        .completed { background: rgba(22, 163, 74, 0.12); color: #166534; }
+        .failed { background: rgba(220, 38, 38, 0.12); color: #991b1b; }
         .section-title { margin: 0 0 12px 0; font-size: 18px; }
         .hint { color: var(--muted); font-size: 14px; }
         .timeline { list-style: none; margin: 0; padding: 0; }
@@ -46,14 +46,16 @@
         .stage-list { display: grid; gap: 10px; }
         .stage-item { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
         .stage-item.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) inset; }
+        .stage-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
         .stage-name { font-weight: 700; }
+        .stage-status { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
         .region-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
         .region-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
         .region-card h3 { margin: 0 0 8px 0; font-size: 16px; }
         .region-stage { color: var(--text); font-weight: 700; margin-bottom: 6px; }
         a { color: #7dd3fc; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        .error-box { margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #fecaca; display: none; white-space: pre-wrap; word-break: break-word; }
+        .error-box { margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(220, 38, 38, 0.08); border: 1px solid rgba(220, 38, 38, 0.2); color: #991b1b; display: none; white-space: pre-wrap; word-break: break-word; }
         @media (max-width: 900px) {
             .grid, .summary-grid { grid-template-columns: 1fr; }
         }
@@ -113,31 +115,52 @@
                 <h2 class="section-title">What the automation is doing</h2>
                 <div class="stage-list" id="stage-list">
                     <div class="stage-item" data-stage="Preparing analysis">
-                        <div class="stage-name">1. Preparing analysis</div>
+                        <div class="stage-row">
+                            <div class="stage-name">1. Preparing analysis</div>
+                            <div class="stage-status">Waiting</div>
+                        </div>
                         <div class="hint">Initializing the run and browser workflow.</div>
                     </div>
                     <div class="stage-item" data-stage="Crawling">
-                        <div class="stage-name">2. Crawling</div>
+                        <div class="stage-row">
+                            <div class="stage-name">2. Crawling</div>
+                            <div class="stage-status">Waiting</div>
+                        </div>
                         <div class="hint">Opening the site and visiting selected navigation targets.</div>
                     </div>
                     <div class="stage-item" data-stage="Discovery">
-                        <div class="stage-name">3. Discovery</div>
+                        <div class="stage-row">
+                            <div class="stage-name">3. Discovery</div>
+                            <div class="stage-status">Waiting</div>
+                        </div>
                         <div class="hint">Collecting visible links and buttons from the current page.</div>
                     </div>
                     <div class="stage-item" data-stage="Navigation Selection">
-                        <div class="stage-name">4. Navigation selection</div>
+                        <div class="stage-row">
+                            <div class="stage-name">4. Navigation selection</div>
+                            <div class="stage-status">Waiting</div>
+                        </div>
                         <div class="hint">Choosing important routes to audit, using the LLM when configured.</div>
                     </div>
                     <div class="stage-item" data-stage="Lighthouse">
-                        <div class="stage-name">5. Lighthouse</div>
+                        <div class="stage-row">
+                            <div class="stage-name">5. Lighthouse</div>
+                            <div class="stage-status">Waiting</div>
+                        </div>
                         <div class="hint">Generating desktop navigation-mode reports for all four categories.</div>
                     </div>
                     <div class="stage-item" data-stage="Completed">
-                        <div class="stage-name">6. Completed</div>
+                        <div class="stage-row">
+                            <div class="stage-name">6. Completed</div>
+                            <div class="stage-status">Waiting</div>
+                        </div>
                         <div class="hint">Reports are ready to review.</div>
                     </div>
                     <div class="stage-item" data-stage="Failed">
-                        <div class="stage-name">Failed</div>
+                        <div class="stage-row">
+                            <div class="stage-name">Failed</div>
+                            <div class="stage-status">Waiting</div>
+                        </div>
                         <div class="hint">The run stopped before completing. Check the error panel and timeline below.</div>
                     </div>
                 </div>
@@ -174,9 +197,45 @@
     </div>
 
     <script>
-        function updateStageHighlight(stage) {
+        function updateStageHighlight(stage, runStatus) {
+            const normalizedStage = (stage || "").split(" (")[0];
+            const stageOrder = [
+                "Preparing analysis",
+                "Crawling",
+                "Discovery",
+                "Navigation Selection",
+                "Lighthouse",
+                "Completed",
+            ];
+            const currentIndex = stageOrder.indexOf(normalizedStage);
+
             document.querySelectorAll(".stage-item").forEach((item) => {
-                item.classList.toggle("active", item.dataset.stage === stage);
+                const itemStage = item.dataset.stage;
+                const statusNode = item.querySelector(".stage-status");
+                item.classList.toggle("active", itemStage === normalizedStage);
+
+                if (runStatus === "failed" && itemStage === "Failed") {
+                    statusNode.textContent = "Error";
+                    return;
+                }
+
+                if (itemStage === "Failed") {
+                    statusNode.textContent = "Waiting";
+                    return;
+                }
+
+                const itemIndex = stageOrder.indexOf(itemStage);
+                if (runStatus === "completed" && itemStage === "Completed") {
+                    statusNode.textContent = "Completed";
+                } else if (itemIndex === -1) {
+                    statusNode.textContent = "Waiting";
+                } else if (itemIndex < currentIndex) {
+                    statusNode.textContent = "Completed";
+                } else if (itemIndex === currentIndex) {
+                    statusNode.textContent = runStatus === "completed" && itemStage !== "Completed" ? "Completed" : "In Progress";
+                } else {
+                    statusNode.textContent = "Waiting";
+                }
             });
         }
 
@@ -245,14 +304,14 @@
             document.getElementById("page-count").textContent = run.pages.length;
             document.getElementById("report-link-top").href = run.report_url || "#";
 
-            updateStageHighlight(run.current_stage);
+            updateStageHighlight(run.current_stage, run.status);
             renderPages(run);
             renderEvents(run);
             renderRegionStatuses(run);
             renderError(run);
         }
 
-        updateStageHighlight("{{ run.current_stage }}");
+        updateStageHighlight("{{ run.current_stage }}", "{{ run.status }}");
         setInterval(refresh, 2000);
         refresh();
     </script>
