@@ -21,8 +21,8 @@
         .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
         .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
-        .grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 16px; }
-        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
         .metric { background: var(--panel-2); border-radius: 12px; padding: 14px; border: 1px solid var(--border); }
         .metric-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
         .metric-value { font-size: 18px; font-weight: 700; margin-top: 6px; }
@@ -55,7 +55,8 @@
         .stage-status.error { color: #b91c1c; }
         .region-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
         .region-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
-        .region-card h3 { margin: 0 0 8px 0; font-size: 16px; }
+        .region-card h3 { margin: 0; font-size: 16px; }
+        .region-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
         .region-stage { color: var(--text); font-weight: 700; margin-bottom: 6px; }
         a { color: #7dd3fc; text-decoration: none; }
         a:hover { text-decoration: underline; }
@@ -85,10 +86,6 @@
                 <div class="metric-value"><span id="status-badge" class="badge {{ run.status }}">{{ run.status }}</span></div>
             </div>
             <div class="metric">
-                <div class="metric-label">Current Stage</div>
-                <div class="metric-value" id="stage">{{ run.current_stage }}</div>
-            </div>
-            <div class="metric">
                 <div class="metric-label">Pages Found</div>
                 <div class="metric-value" id="page-count">{{ run.pages|length }}</div>
             </div>
@@ -98,17 +95,26 @@
 
         <div class="region-grid" id="region-grid">
             <div class="region-card">
-                <h3>India - Mumbai</h3>
+                <div class="region-row">
+                    <h3>India - Mumbai</h3>
+                    <div class="stage-status waiting" id="region-india-status">Waiting</div>
+                </div>
                 <div class="region-stage" id="region-india">Waiting</div>
                 <div class="hint">Virtual profile using India locale, timezone and browser geolocation.</div>
             </div>
             <div class="region-card">
-                <h3>US West - San Francisco</h3>
+                <div class="region-row">
+                    <h3>US West - San Francisco</h3>
+                    <div class="stage-status waiting" id="region-us-status">Waiting</div>
+                </div>
                 <div class="region-stage" id="region-us">Waiting</div>
                 <div class="hint">Virtual profile using US locale, Pacific timezone and SF browser geolocation.</div>
             </div>
             <div class="region-card">
-                <h3>Europe - London</h3>
+                <div class="region-row">
+                    <h3>Europe - London</h3>
+                    <div class="stage-status waiting" id="region-london-status">Waiting</div>
+                </div>
                 <div class="region-stage" id="region-london">Waiting</div>
                 <div class="hint">Virtual profile using UK locale, London timezone and browser geolocation.</div>
             </div>
@@ -168,21 +174,6 @@
                         <div class="hint">The run stopped before completing. Check the error panel and timeline below.</div>
                     </div>
                 </div>
-            </div>
-
-            <div class="card">
-                <h2 class="section-title">Pages discovered so far</h2>
-                <p class="hint">This updates live as the crawler moves through the selected navigation paths.</p>
-                <ul class="page-list" id="pages">
-                    {% for page in run.pages %}
-                    <li class="page-item">
-                        <div class="page-title">{{ page.title or "Untitled page" }}</div>
-                        <div class="page-url">{{ page.url }}</div>
-                    </li>
-                    {% else %}
-                    <li class="page-item">No pages captured yet.</li>
-                    {% endfor %}
-                </ul>
             </div>
         </div>
 
@@ -258,25 +249,6 @@
             badge.className = `badge ${status}`;
         }
 
-        function renderPages(run) {
-            const pages = document.getElementById("pages");
-            pages.innerHTML = "";
-            if (run.pages.length === 0) {
-                pages.innerHTML = '<li class="page-item">No pages captured yet.</li>';
-                return;
-            }
-
-            run.pages.forEach((page) => {
-                const item = document.createElement("li");
-                item.className = "page-item";
-                item.innerHTML = `
-                    <div class="page-title">${page.title || "Untitled page"}</div>
-                    <div class="page-url">${page.url || ""}</div>
-                `;
-                pages.appendChild(item);
-            });
-        }
-
         function renderEvents(run) {
             const events = document.getElementById("events");
             events.innerHTML = "";
@@ -290,11 +262,57 @@
             });
         }
 
+        function applyStateClass(node, value) {
+            node.className = "stage-status";
+            if (value === "Completed") {
+                node.classList.add("completed");
+            } else if (value === "Error") {
+                node.classList.add("error");
+            } else if (value === "In Progress") {
+                node.classList.add("in-progress");
+            } else {
+                node.classList.add("waiting");
+            }
+        }
+
+        function mapRegionStageToState(value, runStatus) {
+            if (runStatus === "failed" && value && value !== "Completed") {
+                return "Error";
+            }
+            if (value === "Completed") {
+                return "Completed";
+            }
+            if (value && value !== "Waiting") {
+                return "In Progress";
+            }
+            return "Waiting";
+        }
+
         function renderRegionStatuses(run) {
             const statuses = run.region_statuses || {};
-            document.getElementById("region-india").textContent = statuses["India - Mumbai"] || "Waiting";
-            document.getElementById("region-us").textContent = statuses["US West - San Francisco"] || "Waiting";
-            document.getElementById("region-london").textContent = statuses["Europe - London"] || "Waiting";
+            const indiaStage = statuses["India - Mumbai"] || "Waiting";
+            const usStage = statuses["US West - San Francisco"] || "Waiting";
+            const londonStage = statuses["Europe - London"] || "Waiting";
+
+            document.getElementById("region-india").textContent = indiaStage;
+            document.getElementById("region-us").textContent = usStage;
+            document.getElementById("region-london").textContent = londonStage;
+
+            const indiaState = mapRegionStageToState(indiaStage, run.status);
+            const usState = mapRegionStageToState(usStage, run.status);
+            const londonState = mapRegionStageToState(londonStage, run.status);
+
+            const indiaStatus = document.getElementById("region-india-status");
+            const usStatus = document.getElementById("region-us-status");
+            const londonStatus = document.getElementById("region-london-status");
+
+            indiaStatus.textContent = indiaState;
+            usStatus.textContent = usState;
+            londonStatus.textContent = londonState;
+
+            applyStateClass(indiaStatus, indiaState);
+            applyStateClass(usStatus, usState);
+            applyStateClass(londonStatus, londonState);
         }
 
         function renderError(run) {
@@ -313,12 +331,10 @@
             const run = await response.json();
 
             updateStatusBadge(run.status);
-            document.getElementById("stage").textContent = run.current_stage;
             document.getElementById("page-count").textContent = run.pages.length;
             document.getElementById("report-link-top").href = run.report_url || "#";
 
             updateStageHighlight(run.current_stage, run.status);
-            renderPages(run);
             renderEvents(run);
             renderRegionStatuses(run);
             renderError(run);
