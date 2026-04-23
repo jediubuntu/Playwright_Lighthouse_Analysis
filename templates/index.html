@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright Lighthouse Analysis</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
+        .card { background: #111827; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #334155; background: #020617; color: white; }
+        button { margin-top: 1rem; padding: 0.8rem 1rem; border: none; border-radius: 8px; background: #38bdf8; color: #082f49; font-weight: bold; cursor: pointer; }
+        a { color: #7dd3fc; }
+        ul { padding-left: 1.2rem; }
+        .status { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; background: #1e293b; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Playwright Lighthouse Analysis</h1>
+        <p>Enter a base URL. The app discovers navigation paths, asks the LLM which ones are critical, and runs Lighthouse navigation mode on desktop with all four default categories.</p>
+        <form method="post" action="/runs">
+            <label for="base_url">Base URL</label>
+            <input id="base_url" name="base_url" type="url" placeholder="https://example.com" required>
+            <button type="submit">Start analysis</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Recent runs</h2>
+        <ul>
+            {% for run in runs %}
+            <li>
+                <a href="/runs/{{ run.run_id }}">{{ run.base_url }}</a>
+                <span class="status">{{ run.status }}</span>
+            </li>
+            {% else %}
+            <li>No runs yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>

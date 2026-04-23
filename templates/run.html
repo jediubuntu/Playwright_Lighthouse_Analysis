@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run {{ run_id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; background: #020617; color: #e2e8f0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .card { background: #111827; padding: 1rem; border-radius: 12px; }
+        a { color: #7dd3fc; }
+        pre { white-space: pre-wrap; word-break: break-word; }
+    </style>
+</head>
+<body>
+    <p><a href="/">← Back</a></p>
+    <div class="grid">
+        <div class="card">
+            <h1>Run status</h1>
+            <p><strong>Base URL:</strong> {{ run.base_url }}</p>
+            <p><strong>Status:</strong> <span id="status">{{ run.status }}</span></p>
+            <p><strong>Stage:</strong> <span id="stage">{{ run.current_stage }}</span></p>
+            <p><a id="report-link" href="{{ run.report_url or '#' }}">Open summary report</a></p>
+        </div>
+        <div class="card">
+            <h2>Discovered pages</h2>
+            <ul id="pages">
+                {% for page in run.pages %}
+                <li>{{ page.title }} — {{ page.url }}</li>
+                {% else %}
+                <li>No pages captured yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+        <h2>Live events</h2>
+        <ul id="events">
+            {% for event in run.events %}
+            <li>{{ event.timestamp }} — {{ event.message }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+        async function refresh() {
+            const response = await fetch("/api/runs/{{ run_id }}");
+            const run = await response.json();
+            document.getElementById("status").textContent = run.status;
+            document.getElementById("stage").textContent = run.current_stage;
+
+            const reportLink = document.getElementById("report-link");
+            reportLink.href = run.report_url || "#";
+
+            const pages = document.getElementById("pages");
+            pages.innerHTML = "";
+            if (run.pages.length === 0) {
+                pages.innerHTML = "<li>No pages captured yet.</li>";
+            } else {
+                run.pages.forEach((page) => {
+                    const item = document.createElement("li");
+                    item.textContent = `${page.title} — ${page.url}`;
+                    pages.appendChild(item);
+                });
+            }
+
+            const events = document.getElementById("events");
+            events.innerHTML = "";
+            run.events.slice().reverse().forEach((event) => {
+                const item = document.createElement("li");
+                item.textContent = `${event.timestamp} — ${event.message}`;
+                events.appendChild(item);
+            });
+        }
+
+        setInterval(refresh, 2000);
+        refresh();
+    </script>
+</body>
+</html>
