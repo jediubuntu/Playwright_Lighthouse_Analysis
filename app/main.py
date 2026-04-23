@@ -7,6 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +19,8 @@ from controller.run_store import RunStore
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPORTS_DIR = BASE_DIR / "reports"
 TEMPLATES_DIR = BASE_DIR / "templates"
+
+load_dotenv(BASE_DIR / ".env")
 
 app = FastAPI(title="Playwright Lighthouse Analysis")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))

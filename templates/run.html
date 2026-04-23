@@ -218,8 +218,8 @@
                 }
 
                 if (itemStage === "Failed") {
-                    statusNode.textContent = "Waiting";
-                    statusNode.classList.add("waiting");
+                    statusNode.textContent = runStatus === "completed" ? "Not Used" : "Waiting";
+                    statusNode.classList.add(runStatus === "completed" ? "completed" : "waiting");
                     return;
                 }
 
