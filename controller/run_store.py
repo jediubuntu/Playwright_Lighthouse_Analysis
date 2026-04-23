@@ -30,6 +30,8 @@ class RunStore:
                 "pages": [],
                 "summary_path": None,
                 "report_url": None,
+                "error": None,
+                "region_statuses": {},
             }
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:

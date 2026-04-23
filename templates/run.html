@@ -5,75 +5,254 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Run {{ run_id }}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; background: #020617; color: #e2e8f0; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-        .card { background: #111827; padding: 1rem; border-radius: 12px; }
-        a { color: #7dd3fc; }
-        pre { white-space: pre-wrap; word-break: break-word; }
+        :root {
+            --bg: #020617;
+            --panel: #0f172a;
+            --panel-2: #111827;
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warn: #f59e0b;
+            --danger: #ef4444;
+            --border: #1e293b;
+        }
+        body { font-family: Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; }
+        .grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 16px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+        .metric { background: var(--panel-2); border-radius: 12px; padding: 14px; border: 1px solid var(--border); }
+        .metric-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .metric-value { font-size: 18px; font-weight: 700; margin-top: 6px; }
+        .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+        .queued { background: #1e293b; color: #cbd5e1; }
+        .running { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; }
+        .completed { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+        .failed { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+        .section-title { margin: 0 0 12px 0; font-size: 18px; }
+        .hint { color: var(--muted); font-size: 14px; }
+        .timeline { list-style: none; margin: 0; padding: 0; }
+        .timeline li { border-left: 2px solid var(--border); padding: 0 0 14px 14px; margin-left: 6px; position: relative; }
+        .timeline li::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); position: absolute; left: -6px; top: 4px; }
+        .timeline-time { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+        .timeline-message { line-height: 1.4; }
+        .page-list { list-style: none; margin: 0; padding: 0; }
+        .page-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .page-item:last-child { border-bottom: none; }
+        .page-title { font-weight: 700; margin-bottom: 4px; }
+        .page-url { color: var(--muted); font-size: 13px; word-break: break-all; }
+        .stage-list { display: grid; gap: 10px; }
+        .stage-item { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+        .stage-item.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) inset; }
+        .stage-name { font-weight: 700; }
+        .region-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .region-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+        .region-card h3 { margin: 0 0 8px 0; font-size: 16px; }
+        .region-stage { color: var(--text); font-weight: 700; margin-bottom: 6px; }
+        a { color: #7dd3fc; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .error-box { margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #fecaca; display: none; white-space: pre-wrap; word-break: break-word; }
+        @media (max-width: 900px) {
+            .grid, .summary-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <p><a href="/">← Back</a></p>
-    <div class="grid">
-        <div class="card">
-            <h1>Run status</h1>
-            <p><strong>Base URL:</strong> {{ run.base_url }}</p>
-            <p><strong>Status:</strong> <span id="status">{{ run.status }}</span></p>
-            <p><strong>Stage:</strong> <span id="stage">{{ run.current_stage }}</span></p>
-            <p><a id="report-link" href="{{ run.report_url or '#' }}">Open summary report</a></p>
+    <div class="container">
+        <div class="topbar">
+            <div>
+                <p style="margin:0 0 6px 0;"><a href="/">← Back to dashboard</a></p>
+                <h1 style="margin:0;">Analysis Run</h1>
+            </div>
+            <a id="report-link-top" href="{{ run.report_url or '#' }}">Open summary report</a>
         </div>
-        <div class="card">
-            <h2>Discovered pages</h2>
-            <ul id="pages">
-                {% for page in run.pages %}
-                <li>{{ page.title }} — {{ page.url }}</li>
-                {% else %}
-                <li>No pages captured yet.</li>
+
+        <div class="summary-grid">
+            <div class="metric">
+                <div class="metric-label">Base URL</div>
+                <div class="metric-value" id="base-url" style="font-size:15px; word-break: break-word;">{{ run.base_url }}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Overall Status</div>
+                <div class="metric-value"><span id="status-badge" class="badge {{ run.status }}">{{ run.status }}</span></div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Current Stage</div>
+                <div class="metric-value" id="stage">{{ run.current_stage }}</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Pages Found</div>
+                <div class="metric-value" id="page-count">{{ run.pages|length }}</div>
+            </div>
+        </div>
+
+        <div id="error-box" class="error-box"></div>
+
+        <div class="region-grid" id="region-grid">
+            <div class="region-card">
+                <h3>India - Mumbai</h3>
+                <div class="region-stage" id="region-india">Waiting</div>
+                <div class="hint">Virtual profile using India locale, timezone and browser geolocation.</div>
+            </div>
+            <div class="region-card">
+                <h3>US West - San Francisco</h3>
+                <div class="region-stage" id="region-us">Waiting</div>
+                <div class="hint">Virtual profile using US locale, Pacific timezone and SF browser geolocation.</div>
+            </div>
+            <div class="region-card">
+                <h3>Europe - London</h3>
+                <div class="region-stage" id="region-london">Waiting</div>
+                <div class="hint">Virtual profile using UK locale, London timezone and browser geolocation.</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2 class="section-title">What the automation is doing</h2>
+                <div class="stage-list" id="stage-list">
+                    <div class="stage-item" data-stage="Preparing analysis">
+                        <div class="stage-name">1. Preparing analysis</div>
+                        <div class="hint">Initializing the run and browser workflow.</div>
+                    </div>
+                    <div class="stage-item" data-stage="Crawling">
+                        <div class="stage-name">2. Crawling</div>
+                        <div class="hint">Opening the site and visiting selected navigation targets.</div>
+                    </div>
+                    <div class="stage-item" data-stage="Discovery">
+                        <div class="stage-name">3. Discovery</div>
+                        <div class="hint">Collecting visible links and buttons from the current page.</div>
+                    </div>
+                    <div class="stage-item" data-stage="Navigation Selection">
+                        <div class="stage-name">4. Navigation selection</div>
+                        <div class="hint">Choosing important routes to audit, using the LLM when configured.</div>
+                    </div>
+                    <div class="stage-item" data-stage="Lighthouse">
+                        <div class="stage-name">5. Lighthouse</div>
+                        <div class="hint">Generating desktop navigation-mode reports for all four categories.</div>
+                    </div>
+                    <div class="stage-item" data-stage="Completed">
+                        <div class="stage-name">6. Completed</div>
+                        <div class="hint">Reports are ready to review.</div>
+                    </div>
+                    <div class="stage-item" data-stage="Failed">
+                        <div class="stage-name">Failed</div>
+                        <div class="hint">The run stopped before completing. Check the error panel and timeline below.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="section-title">Pages discovered so far</h2>
+                <p class="hint">This updates live as the crawler moves through the selected navigation paths.</p>
+                <ul class="page-list" id="pages">
+                    {% for page in run.pages %}
+                    <li class="page-item">
+                        <div class="page-title">{{ page.title or "Untitled page" }}</div>
+                        <div class="page-url">{{ page.url }}</div>
+                    </li>
+                    {% else %}
+                    <li class="page-item">No pages captured yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+            <h2 class="section-title">Live timeline</h2>
+            <p class="hint">Newest event first. This tells you exactly what the automation has just done.</p>
+            <ul class="timeline" id="events">
+                {% for event in run.events|reverse %}
+                <li>
+                    <div class="timeline-time">{{ event.timestamp }}</div>
+                    <div class="timeline-message">{{ event.message }}</div>
+                </li>
                 {% endfor %}
             </ul>
         </div>
     </div>
 
-    <div class="card" style="margin-top: 1rem;">
-        <h2>Live events</h2>
-        <ul id="events">
-            {% for event in run.events %}
-            <li>{{ event.timestamp }} — {{ event.message }}</li>
-            {% endfor %}
-        </ul>
-    </div>
-
     <script>
-        async function refresh() {
-            const response = await fetch("/api/runs/{{ run_id }}");
-            const run = await response.json();
-            document.getElementById("status").textContent = run.status;
-            document.getElementById("stage").textContent = run.current_stage;
+        function updateStageHighlight(stage) {
+            document.querySelectorAll(".stage-item").forEach((item) => {
+                item.classList.toggle("active", item.dataset.stage === stage);
+            });
+        }
 
-            const reportLink = document.getElementById("report-link");
-            reportLink.href = run.report_url || "#";
+        function updateStatusBadge(status) {
+            const badge = document.getElementById("status-badge");
+            badge.textContent = status;
+            badge.className = `badge ${status}`;
+        }
 
+        function renderPages(run) {
             const pages = document.getElementById("pages");
             pages.innerHTML = "";
             if (run.pages.length === 0) {
-                pages.innerHTML = "<li>No pages captured yet.</li>";
-            } else {
-                run.pages.forEach((page) => {
-                    const item = document.createElement("li");
-                    item.textContent = `${page.title} — ${page.url}`;
-                    pages.appendChild(item);
-                });
+                pages.innerHTML = '<li class="page-item">No pages captured yet.</li>';
+                return;
             }
 
+            run.pages.forEach((page) => {
+                const item = document.createElement("li");
+                item.className = "page-item";
+                item.innerHTML = `
+                    <div class="page-title">${page.title || "Untitled page"}</div>
+                    <div class="page-url">${page.url || ""}</div>
+                `;
+                pages.appendChild(item);
+            });
+        }
+
+        function renderEvents(run) {
             const events = document.getElementById("events");
             events.innerHTML = "";
             run.events.slice().reverse().forEach((event) => {
                 const item = document.createElement("li");
-                item.textContent = `${event.timestamp} — ${event.message}`;
+                item.innerHTML = `
+                    <div class="timeline-time">${event.timestamp}</div>
+                    <div class="timeline-message">${event.message}</div>
+                `;
                 events.appendChild(item);
             });
         }
 
+        function renderRegionStatuses(run) {
+            const statuses = run.region_statuses || {};
+            document.getElementById("region-india").textContent = statuses["India - Mumbai"] || "Waiting";
+            document.getElementById("region-us").textContent = statuses["US West - San Francisco"] || "Waiting";
+            document.getElementById("region-london").textContent = statuses["Europe - London"] || "Waiting";
+        }
+
+        function renderError(run) {
+            const box = document.getElementById("error-box");
+            if (run.error) {
+                box.style.display = "block";
+                box.textContent = `Run error: ${run.error}`;
+            } else {
+                box.style.display = "none";
+                box.textContent = "";
+            }
+        }
+
+        async function refresh() {
+            const response = await fetch("/api/runs/{{ run_id }}");
+            const run = await response.json();
+
+            updateStatusBadge(run.status);
+            document.getElementById("stage").textContent = run.current_stage;
+            document.getElementById("page-count").textContent = run.pages.length;
+            document.getElementById("report-link-top").href = run.report_url || "#";
+
+            updateStageHighlight(run.current_stage);
+            renderPages(run);
+            renderEvents(run);
+            renderRegionStatuses(run);
+            renderError(run);
+        }
+
+        updateStageHighlight("{{ run.current_stage }}");
         setInterval(refresh, 2000);
         refresh();
     </script>

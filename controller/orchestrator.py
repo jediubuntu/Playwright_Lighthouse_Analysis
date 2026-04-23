@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -42,15 +43,43 @@ class AnalysisOrchestrator:
             )
             self._event(run_id, "info", "Analysis completed")
         except Exception as exc:
-            self.run_store.update_run(run_id, status="failed", current_stage="Failed")
+            self.run_store.update_run(
+                run_id,
+                status="failed",
+                current_stage="Failed",
+                error=str(exc),
+            )
             self._event(run_id, "error", f"Analysis failed: {exc}")
+            self._event(run_id, "error", traceback.format_exc())
 
     def _progress_callback(self, run_id: str):
-        def emit(stage: str, message: str, *, pages: list[dict[str, Any]] | None = None) -> None:
-            self.run_store.update_run(run_id, current_stage=stage, status="running")
+        def emit(
+            stage: str,
+            message: str,
+            *,
+            pages: list[dict[str, Any]] | None = None,
+            region_name: str | None = None,
+        ) -> None:
+            stage_label = f"{stage} ({region_name})" if region_name else stage
+            run = self.run_store.get_run(run_id) or {}
+            region_statuses = dict(run.get("region_statuses", {}))
+            if region_name:
+                region_statuses[region_name] = stage
+            self.run_store.update_run(
+                run_id,
+                current_stage=stage_label,
+                status="running",
+                region_statuses=region_statuses,
+            )
             self._event(run_id, "info", message)
             if pages is not None:
-                self.run_store.set_pages(run_id, pages)
+                existing_pages = list((self.run_store.get_run(run_id) or {}).get("pages", []))
+                if region_name:
+                    existing_pages = [page for page in existing_pages if page.get("region_name") != region_name]
+                    existing_pages.extend(pages)
+                    self.run_store.set_pages(run_id, existing_pages)
+                else:
+                    self.run_store.set_pages(run_id, pages)
 
         return emit
 
