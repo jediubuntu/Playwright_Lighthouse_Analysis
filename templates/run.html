@@ -49,6 +49,10 @@
         .stage-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
         .stage-name { font-weight: 700; }
         .stage-status { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+        .stage-status.waiting { color: #64748b; }
+        .stage-status.in-progress { color: #b45309; }
+        .stage-status.completed { color: #166534; }
+        .stage-status.error { color: #b91c1c; }
         .region-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
         .region-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
         .region-card h3 { margin: 0 0 8px 0; font-size: 16px; }
@@ -214,27 +218,36 @@
                 const statusNode = item.querySelector(".stage-status");
                 item.classList.toggle("active", itemStage === normalizedStage);
 
+                statusNode.className = "stage-status";
+
                 if (runStatus === "failed" && itemStage === "Failed") {
                     statusNode.textContent = "Error";
+                    statusNode.classList.add("error");
                     return;
                 }
 
                 if (itemStage === "Failed") {
                     statusNode.textContent = "Waiting";
+                    statusNode.classList.add("waiting");
                     return;
                 }
 
                 const itemIndex = stageOrder.indexOf(itemStage);
                 if (runStatus === "completed" && itemStage === "Completed") {
                     statusNode.textContent = "Completed";
+                    statusNode.classList.add("completed");
                 } else if (itemIndex === -1) {
                     statusNode.textContent = "Waiting";
+                    statusNode.classList.add("waiting");
                 } else if (itemIndex < currentIndex) {
                     statusNode.textContent = "Completed";
+                    statusNode.classList.add("completed");
                 } else if (itemIndex === currentIndex) {
                     statusNode.textContent = runStatus === "completed" && itemStage !== "Completed" ? "Completed" : "In Progress";
+                    statusNode.classList.add(runStatus === "completed" && itemStage !== "Completed" ? "completed" : "in-progress");
                 } else {
                     statusNode.textContent = "Waiting";
+                    statusNode.classList.add("waiting");
                 }
             });
         }
