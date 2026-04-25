@@ -5,38 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Playwright Lighthouse Analysis</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
-        .card { background: #111827; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; }
-        input { width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid #334155; background: #020617; color: white; }
-        button { margin-top: 1rem; padding: 0.8rem 1rem; border: none; border-radius: 8px; background: #38bdf8; color: #082f49; font-weight: bold; cursor: pointer; }
-        a { color: #7dd3fc; }
-        ul { padding-left: 1.2rem; }
-        .status { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; background: #1e293b; }
+        :root {
+            --bg: #f4f8fc;
+            --panel: rgba(255, 255, 255, 0.92);
+            --panel-soft: #eef4fb;
+            --line: #d7e2ef;
+            --ink: #102033;
+            --muted: #5f7188;
+            --accent: #2563eb;
+            --accent-soft: #dbeafe;
+            --shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 2rem;
+            font-family: Inter, Segoe UI, Arial, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 32%),
+                radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+            min-height: 100vh;
+        }
+        .shell { max-width: 1040px; margin: 0 auto; }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+        h1, h2, p { margin-top: 0; }
+        .subtitle {
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 0.85rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            background: #ffffff;
+            color: var(--ink);
+            font-size: 1rem;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+        }
+        button {
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #3b82f6);
+            color: #ffffff;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        a { color: var(--accent); text-decoration: none; font-weight: 600; }
+        ul { padding-left: 1.2rem; margin-bottom: 0; }
+        li { margin-bottom: 0.75rem; }
+        .status {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: #1d4ed8;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>Playwright Lighthouse Analysis</h1>
-        <p>Enter a base URL. The app discovers navigation paths, asks the LLM which ones are critical, and runs Lighthouse navigation mode on desktop with all four default categories.</p>
-        <form method="post" action="/runs">
-            <label for="base_url">Base URL</label>
-            <input id="base_url" name="base_url" type="url" placeholder="https://example.com" required>
-            <button type="submit">Start analysis</button>
-        </form>
-    </div>
+    <div class="shell">
+        <div class="card">
+            <h1>Playwright Lighthouse Analysis</h1>
+            <p class="subtitle">Enter a base URL. The app discovers navigation paths, asks the LLM which ones are critical, and runs Lighthouse navigation mode on desktop with all four default categories.</p>
+            <form method="post" action="/runs">
+                <label for="base_url">Base URL</label>
+                <input id="base_url" name="base_url" type="url" placeholder="https://example.com" required>
+                <button type="submit">Start analysis</button>
+            </form>
+        </div>
 
-    <div class="card">
-        <h2>Recent runs</h2>
-        <ul>
-            {% for run in runs %}
-            <li>
-                <a href="/runs/{{ run.run_id }}">{{ run.base_url }}</a>
-                <span class="status">{{ run.status }}</span>
-            </li>
-            {% else %}
-            <li>No runs yet.</li>
-            {% endfor %}
-        </ul>
+        <div class="card">
+            <h2>Recent runs</h2>
+            <ul>
+                {% for run in runs %}
+                <li>
+                    <a href="/runs/{{ run.run_id }}">{{ run.base_url }}</a>
+                    <span class="status">{{ run.status }}</span>
+                </li>
+                {% else %}
+                <li>No runs yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </body>
 </html>

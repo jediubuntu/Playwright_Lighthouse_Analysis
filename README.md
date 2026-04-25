@@ -9,7 +9,7 @@ The user provides only a base URL. The app then:
 1. opens the site in Playwright
 2. discovers visible links and buttons
 3. filters out obvious auth/login/basic-auth style routes
-4. sends remaining navigation candidates to an OpenAI-compatible LLM to identify critical navigation paths
+4. sends remaining navigation candidates to a Gemini-compatible LLM endpoint to identify critical navigation paths
 5. revisits the selected paths
 6. runs Lighthouse in **navigation** mode with **desktop** preset and all four default categories:
    - performance
@@ -76,20 +76,39 @@ Each audited page generates:
 
 ## Setup
 
+### Windows
+
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r app\requirements.txt
-.\.venv\Scripts\python.exe -m playwright install chromium
-npm install -g lighthouse
+python scripts/setup_local.py
 ```
 
-You can also rely on `npx lighthouse`, but Node.js and Lighthouse must be installed and available on PATH.
+### macOS / Linux
+
+```bash
+python3 scripts/setup_local.py
+```
+
+The setup script:
+- creates `.venv`
+- installs Python dependencies
+- installs Playwright Chromium
+- checks for `npx`
+- creates `.env` if missing
+
+You can rely on `npx lighthouse`, but Node.js and Lighthouse must be installed and available on PATH.
 
 ## Run
 
+### Windows
+
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8011
+python scripts/run_local.py
+```
+
+### macOS / Linux
+
+```bash
+python3 scripts/run_local.py
 ```
 
 Open:
@@ -100,15 +119,35 @@ http://127.0.0.1:8011
 
 ## Optional LLM configuration
 
-Set these as environment variables in your shell before starting the app:
+### Windows
 
 ```powershell
-$env:PLA_LLM_API_KEY="your_key_here"
-$env:PLA_LLM_BASE_URL="https://api.openai.com/v1"
-$env:PLA_LLM_MODEL="gpt-4.1-mini"
+$env:GEMINI_API_KEY="your_key_here"
+$env:PLA_LLM_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai"
+$env:PLA_LLM_MODEL="models/gemini-2.5-flash"
 ```
 
-If LLM settings are missing, the app falls back to the first five discovered navigation candidates after filtering blocked auth/login-style links.
+### macOS / Linux
+
+```bash
+export GEMINI_API_KEY="your_key_here"
+export PLA_LLM_BASE_URL="https://generativelanguage.googleapis.com/v1beta/openai"
+export PLA_LLM_MODEL="models/gemini-2.5-flash"
+```
+
+If LLM settings are missing, the app falls back to heuristic selection instead of failing the run.
+
+Current fallback behavior:
+- retries transient LLM failures
+- falls back to heuristic candidate scoring if LLM selection still fails
+- prefers labels such as pricing, product, docs, features, login, signup, dashboard, and contact pages
+- limits fallback selection to 5 paths
+
+`PLA_LLM_API_KEY` still works, but the app now also accepts `GEMINI_API_KEY`,
+`GOOGLE_API_KEY`, and `OPENAI_API_KEY`.
+
+Recommended model:
+- `models/gemini-2.5-flash`
 
 ## How the virtual locations help
 
@@ -171,4 +210,5 @@ git ls-files
 - the run dashboard uses a light background UI and shows per-step workflow status plus per-region status cards
 - Lighthouse on Windows may sometimes return a non-zero exit code after writing output files due to temp cleanup issues; this project treats written report files as usable
 - auth/login/basic-auth style navigation targets are filtered before crawling
+- LLM navigation selection now includes retry handling, timestamped logs, and heuristic fallback selection
 - this project is path-portable and can be moved to another folder as long as dependencies are installed there
