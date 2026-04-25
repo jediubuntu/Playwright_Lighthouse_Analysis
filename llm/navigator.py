@@ -172,10 +172,10 @@ class NavigationLLM:
                 if not retryable or attempt >= self.max_retries:
                     raise LLMNavigationError(message) from exc
 
-                sleep_seconds = self._retry_after_seconds(exc) or self.retry_seconds
                 if exc.code == 429:
-                    sleep_seconds = max(60.0, sleep_seconds)
+                    raise LLMNavigationError(message) from exc
 
+                sleep_seconds = self._retry_after_seconds(exc) or self.retry_seconds
                 print(
                     f"[{ts()}] NavigationLLM HTTP {exc.code}; retrying in {sleep_seconds:.1f}s "
                     f"({attempt + 1}/{self.max_retries})"

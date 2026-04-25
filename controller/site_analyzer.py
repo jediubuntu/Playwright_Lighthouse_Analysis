@@ -171,7 +171,7 @@ async def crawl_region(*, page, base_url: str, progress, navigation_llm: Navigat
     visited_urls: set[str] = set()
 
     progress("Crawling", f"[{region_name}] Opening base URL {base_url}", region_name=region_name)
-    await page.goto(base_url, wait_until="networkidle", timeout=30000)
+    await page.goto(base_url, wait_until="networkidle", timeout=60000)
     await page.add_init_script(TAG_NAV_JS)
     await page.evaluate(TAG_NAV_JS)
 
@@ -204,7 +204,7 @@ async def crawl_region(*, page, base_url: str, progress, navigation_llm: Navigat
             region_name=region_name,
         )
         try:
-            await page.goto(normalized, wait_until="networkidle", timeout=30000)
+            await page.goto(normalized, wait_until="networkidle", timeout=60000)
             await page.evaluate(TAG_NAV_JS)
             page_entry = await inspect_page(
                 page=page,
