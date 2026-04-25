@@ -19,11 +19,13 @@ from controller.run_store import RunStore
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPORTS_DIR = BASE_DIR / "reports"
 TEMPLATES_DIR = BASE_DIR / "templates"
+STATIC_DIR = BASE_DIR / "app" / "static"
 
 load_dotenv(BASE_DIR / ".env")
 
 app = FastAPI(title="Playwright Lighthouse Analysis")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/static-reports", StaticFiles(directory=str(REPORTS_DIR)), name="static-reports")
 
 run_store = RunStore()

@@ -4,38 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report {{ run_id }}</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2rem; background: #020617; color: #e2e8f0; }
-        .card { background: #111827; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; }
-        a { color: #7dd3fc; }
-        pre { white-space: pre-wrap; background: #0f172a; padding: 1rem; border-radius: 8px; overflow-x: auto; }
-    </style>
+    <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-    <p><a href="/runs/{{ run_id }}">← Back to run</a></p>
-    <div class="card">
-        <h1>Run summary</h1>
-        <p><strong>Base URL:</strong> {{ run.base_url }}</p>
-        <p><strong>Status:</strong> {{ run.status }}</p>
-    </div>
-
-    {% if summary %}
-        {% for page in summary.pages %}
+    <div class="container">
+        <p><a href="/runs/{{ run_id }}">← Back to run</a></p>
         <div class="card">
-            <h2>{{ page.title }}</h2>
-            <p><a href="{{ page.url }}" target="_blank">{{ page.url }}</a></p>
-            {% if page.lighthouse %}
-            <p><a href="/static-reports/{{ run_id }}/{{ page.lighthouse.html_report.split('\\')[-1] }}">Open Lighthouse HTML report</a></p>
-            <pre>{{ page.lighthouse | tojson(indent=2) }}</pre>
-            {% else %}
-            <p>No Lighthouse report was generated for this page.</p>
-            {% endif %}
+            <h1>Run summary</h1>
+            <p><strong>Base URL:</strong> {{ run.base_url }}</p>
+            <p><strong>Status:</strong> {{ run.status }}</p>
         </div>
-        {% endfor %}
-    {% else %}
-    <div class="card">
-        <p>Summary is not ready yet.</p>
+
+        {% if summary %}
+            {% for page in summary.pages %}
+            <div class="card">
+                <h2>{{ page.title }}</h2>
+                <p><a href="{{ page.url }}" target="_blank">{{ page.url }}</a></p>
+                {% if page.lighthouse %}
+                <p><a href="/static-reports/{{ run_id }}/{{ page.lighthouse.html_report.split('\\')[-1] }}">Open Lighthouse HTML report</a></p>
+                <pre>{{ page.lighthouse | tojson(indent=2) }}</pre>
+                {% else %}
+                <p>No Lighthouse report was generated for this page.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="card">
+            <p>Summary is not ready yet.</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </body>
 </html>
